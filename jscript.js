@@ -4,15 +4,8 @@ var frames = 0;
 const intervalo = 5;
 var diryJ,dirxJ;
 var shots = []
-var velT;
 var tamTelaW = cnv.width;
 var tamTelaH = cnv.height;
-var jogo;
-var contBombas,painelContBombas,velB,tmpCriaBomba;
-var bombasTotal;
-var vidaPlaneta,barraPlaneta;
-var ie,isom;
-var telaMsg;
 var hasShot = false;
 var score = 0;
 var enemyWaves = 0;
