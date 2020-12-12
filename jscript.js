@@ -1,8 +1,26 @@
-var cnv = document.getElementById("gameScreen");
-var ctx = cnv.getContext("2d");
+const cnv = document.getElementById("gameScreen");
+const ctx = cnv.getContext("2d");
 var frames = 0;
-const intervalo = 2;
+const intervalo = 5;
 var diryJ,dirxJ;
+var shots = []
+var velT;
+var tamTelaW = cnv.width;
+var tamTelaH = cnv.height;
+var jogo;
+var contBombas,painelContBombas,velB,tmpCriaBomba;
+var bombasTotal;
+var vidaPlaneta,barraPlaneta;
+var ie,isom;
+var telaMsg;
+var hasShot = false;
+var score = 0;
+var enemyWaves = 0;
+var enemies = [];
+
+function enemySpawnX(){
+	return Math.random() * ((cnv.width - enemy.w) - enemy.w) + enemy.w;
+}
 
 var delay = ( function() {
     var timer = 0;
@@ -12,7 +30,21 @@ var delay = ( function() {
     };
 })();
 
-var player = {
+const background = {
+	w: 400,
+	h: 600,
+	x: 0,
+	y: 0,
+	img: new Image(),
+
+	desenha() {
+		ctx.drawImage(
+		background.img, 
+		background.x, background.y,
+		cnv.width, cnv.height);
+	}
+};
+const player = {
 	x: 0,
 	y: 0,
 	vel: 0,
@@ -26,86 +58,114 @@ var player = {
 	atualizaQuadros() {
 		const atraso = frames % intervalo === 0;
 		if(atraso) {
-			if(player.imgInd > player.imgPos.length) {
+			if(player.imgInd >= player.imgPos.length - 1) {
 				player.imgInd = 0;
 			} 
 			player.imgInd++;
 		};
 	},
 	explode() {
-		if(colisao(player, enemy)) {
-			ctx.clearRect(player.x, player.y, player.w, player.h);
-			player.live = false			
-		}
+		ctx.clearRect(player.x, player.y, player.w, player.h);
+		player.live = false			
 	},
 	desenha() {
 		player.atualizaQuadros();
-		player.explode();
-		const spriteW = player.imgPos[player.imgInd]
+		//player.explode();
+		const spriteX = player.imgPos[player.imgInd]
 		ctx.drawImage(
 			player.img, 
-			spriteW, 1, 
+			spriteX, 1, 
 			player.w, player.h,
 			player.x, player.y,
 			player.w, player.h);
+	},
+	atira(){
+		shots.push(new Shot());
 	}
-}
+};
 
 var enemy = {
-	x: Math.random() * ctx.width,
+	x:  Math.random() * (cnv.width - 0) + 0,
 	y: 0,
 	w: 25,
 	h: 16,
 	img: new Image(),
-	imgPos: [1, 26],
+	imgPos: [1, 1, 26, 26],
 	imgInd: 0,
+};
+
+class Enemy {
+	constructor(posX, posY) {
+		this.x = posX;
+		this.y = posY;
+		this.w = 25;
+		this.h = 16;
+		this.imgPos = [1, 1, 26, 26];
+		this.imgInd = 0;
+		this.live = true;
+	}
+	
 	atualizaQuadros() {
 		const atraso = frames % intervalo === 0;
 		if(atraso) {
-			if(enemy.imgInd >= enemy.imgPos.length - 1) {
-				enemy.imgInd = 0;
+			if(this.imgInd >= this.imgPos.length - 1) {
+				this.imgInd = 0;
 			} 
-			enemy.imgInd++;
-		};
-	},
-	explode() {
-		if(enemy.y >= 510) {
-			ctx.clearRect(enemy.x, enemy.y, enemy.w, enemy.h);
-			enemy.x = Math.random() * ctx.width;
-			enemy.y = 0;
+			this.imgInd++;
 		}
-	},
+	}
+
 	desenha() {
-		enemy.atualizaQuadros();
-		const spriteW = enemy.imgPos[enemy.imgInd]
+		this.atualizaQuadros();
+		const spriteX = this.imgPos[this.imgInd]
 		ctx.drawImage(
 			enemy.img, 
-			spriteW, 0, 
-			enemy.w, enemy.h,
-			enemy.x, enemy.y,
-			enemy.w, enemy.h
-		);
-	},
-	move() {
-		if(enemy.y >= tamTelaH)
-			enemy.y = tamTelaH;
-		else
-			enemy.y += 2; 
+			spriteX, 1, 
+			this.w, this.h,
+			this.x, this.y,
+			this.w, this.h
+		)
 	}
-};
 
-var velT;
-var tamTelaW,tamTelaH;
-var jogo;
-var contBombas,painelContBombas,velB,tmpCriaBomba;
-var bombasTotal;
-var vidaPlaneta,barraPlaneta;
-var ie,isom;
-var telaMsg;
+	move() {
+		if(this.y >= tamTelaH)
+			this.y = 0;
+		else
+			this.y += 2;
+	}
+}
+
+class Shot {
+	constructor() {
+		this.x = player.x + (player.w)/2 - 3.5;
+		this.y = player.y - 7;
+		this.w = 5;
+		this.h = 5;
+		this.vel = .1;
+	}
+
+	desenha() {
+		if(this.y > 0){
+			ctx.fillStyle = 'green';
+			ctx.fillRect(this.x, this.y , this.w, this.h);
+		}
+	}
+	
+	move() {
+		if(this.y > 0){
+			this.y-=5;
+		}
+	}
+
+	hit(){
+		ctx.clearRect(this.x, this.y, this.w, this.h);
+		score = score + 10;
+	}
+}
 
 function colisao(obj1, obj2) {
-	var objeto1 = {x: obj1.x, y: obj1.y, largura: obj1.largura, altura: obj1.altura};
-	var objeto2 = {x: obj2.x, y: obj2.y, largura: obj2.largura, altura: obj2.altura};
+	var objeto1 = {x: obj1.x, y: obj1.y, largura: obj1.w, altura: obj1.h};
+	var objeto2 = {x: obj2.x, y: obj2.y, largura: obj2.w, altura: obj2.h};
 
 	if (objeto1.x < objeto2.x + objeto2.largura && 
 		objeto1.x + objeto1.largura > objeto2.x && 
@@ -115,10 +175,6 @@ function colisao(obj1, obj2) {
 	};
 	return false;
 };
-
-function isPlayerThere(where, playerPlace){
-	return (where < playerPlace);
-}
 
 function teclaDw(){
 	var tecla=event.keyCode;
@@ -134,7 +190,7 @@ function teclaDw(){
 	}
 	if(tecla==32){//Espaço / Tiro
 		//TIRO
-		atira(player.x+17,player.y);
+		hasShot = true;
 	}
 }
 function teclaUp(){
@@ -145,113 +201,10 @@ function teclaUp(){
 	if((tecla==37)||(tecla==39)){//Esquerda
 		dirxJ=0;
 	}
-}
-
-function controlaBomba(){
-	bombasTotal=document.getElementsByClassName("enemy");
-	var tam=bombasTotal.length;
-	for(var i=0;i<tam;i++){
-		if(bombasTotal[i]){
-			var pi=bombasTotal[i].offsetTop;
-			pi+=velB;
-			bombasTotal[i].style.top=pi+"px";
-			if(pi>tamTelaH){
-				vidaPlaneta-=10;
-				criaExplosao(2,bombasTotal[i].offsetLeft,null);
-				bombasTotal[i].remove();
-			}
-		}
+	if (tecla==32 && hasShot==true){
+		player.atira();
+		hasShot = false;
 	}
-}
-function atira(x,y){
-	var t=document.createElement("div");
-	var att1=document.createAttribute("class");
-	var att2=document.createAttribute("style");
-	att1.value="tiroJog";
-	att2.value="top:"+y+"px;left:"+x+"px";
-	t.setAttributeNode(att1);
-	t.setAttributeNode(att2);
-	document.body.appendChild(t);
-}
-function controleTiros(){
-	var tiros=document.getElementsByClassName("tiroJog");
-	var tam=tiros.length;
-	for(var i=0;i<tam;i++){
-		if(tiros[i]){
-			var pt=tiros[i].offsetTop;
-			pt-=velT;
-			tiros[i].style.top=pt+"px";
-			colisaoTiroBomba(tiros[i]);
-			if(pt<0){
-				//document.body.removeChild(tiros[i]);
-				tiros[i].remove();
-			}
-		}
-	}
-}
-function colisaoTiroBomba(tiro){
-	var tam=bombasTotal.length;
-	for(var i=0;i<tam;i++){
-		if(bombasTotal[i]){
-			if(
-				(
-					(tiro.offsetTop<=(bombasTotal[i].offsetTop+40))&& //Cima tiro com baixo enemy
-					((tiro.offsetTop+6)>=(bombasTotal[i].offsetTop)) //Baixo tiro com cima enemy
-				)
-				&&
-				(
-					(tiro.offsetLeft<=(bombasTotal[i].offsetLeft+24))&& //Esquerda tiro com direita enemy
-					((tiro.offsetLeft+6)>=(bombasTotal[i].offsetLeft)) //Direita Tito  com esquerda Bomba
-				)
-			){
-				criaExplosao(1,bombasTotal[i].offsetLeft-25,bombasTotal[i].offsetTop);
-				bombasTotal[i].remove();
-				tiro.remove();
-			}
-		}
-	}
-}
-function criaExplosao(tipo,x,y){ //Tipo 1=AR, 2=TERRA
-	if(document.getElementById("explosao"+(ie-4))){
-		document.getElementById("explosao"+(ie-4)).remove();
-	}
-	var explosao=document.createElement("div");
-	var img=document.createElement("img");
-	var som=document.createElement("audio");
-	//Atributos para div
-	var att1=document.createAttribute("class");
-	var att2=document.createAttribute("style");
-	var att3=document.createAttribute("id");
-	//Atributo para imagem
-	var att4=document.createAttribute("src");
-	//Atributos para audio
-	var att5=document.createAttribute("src");
-	var att6=document.createAttribute("id");
-
-	att3.value="explosao"+ie;
-	if(tipo==1){
-		att1.value="explosaoAr";
-		att2.value="top:"+y+"px;left:"+x+"px;";
-		att4.value="explosao_ar.gif?"+new Date();
-	}else{
-		att1.value="explosaoChao";
-		att2.value="top:"+(tamTelaH-57)+"px;left:"+(x-17)+"px;";
-		att4.value="explosao_chao.gif?"+new Date();
-	}
-	att5.value="exp1.mp3?"+new Date();
-	att6.value="som"+isom;
-	explosao.setAttributeNode(att1);
-	explosao.setAttributeNode(att2);
-	explosao.setAttributeNode(att3);
-	img.setAttributeNode(att4);
-	som.setAttributeNode(att5);
-	som.setAttributeNode(att6);
-	explosao.appendChild(img);
-	explosao.appendChild(som);
-	document.body.appendChild(explosao);
-	document.getElementById("som"+isom).play();
-	ie++;
-	isom++;
 }
 
 function controlaJogador(){
@@ -271,98 +224,105 @@ function controlaJogador(){
 	}
 }
 
-function drawFrame(obj, posX){
-	ctx.drawImage(obj.img, posX, 0, obj.w, obj.h, obj.x, obj.y, obj.w, obj.h);
+function shotControll(){
+	for (var i = 0; i < shots.length; i++){
+		if (shots[i].y == 0) {
+			shots.splice(i, 1);
+			  break;
+		}
+		shots[i].desenha()
+		shots[i].move()
+		
+		for (var e = 0; e < enemies.length; e++){
+			if (colisao(shots[i], enemies[e])){
+				shots[i].hit();
+				shots.splice(i, 1);
+				enemies.splice(e, 1);
+				break;
+			}
+		}
+	}
+}
+
+function enemiesControll(){
+	if (enemies.length == 0){
+		enemyWaves++;
+		while(enemies.length < 9){
+			if(enemyWaves % 10 == 0){
+				enemies.push(new Enemy(enemySpawnX(), 26*(enemyWaves/2)));
+			} else {
+				enemies.push(new Enemy(enemySpawnX(), 0));
+			}
+		}
+		
+	} else {
+		for (const e of enemies) {
+			e.desenha();
+			e.move();
+			if(colisao(player, e)){
+				player.explode();
+				break;
+			}
+		}
+	}
 }
 
 function gameLoop(){
 	if(player.live){
-		//FUNÇÕES DE CONTROLE
-		//ctx.clearRect(0, 0, cnv.width, cnv.height);
+		background.desenha();
 		player.desenha();
-		controlaJogador()
-		enemy.desenha();
-		enemy.move();
+
+		controlaJogador();
+		enemiesControll()
+		shotControll();
+
+		document.getElementById("score").innerHTML = score;
+		document.getElementById("wave").innerHTML = enemyWaves;
 		window.requestAnimationFrame(gameLoop, cnv);
 	}
 }
 
 
-function reinicia(){
-	bombasTotal=document.getElementsByClassName("enemy");
-	var tam=bombasTotal.length;
-	for(var i=0;i<tam;i++){
-		if(bombasTotal[i]){
-			bombasTotal[i].remove();
-		}
-	}
-	var tam=bombasTotal.length;
-	for(var i=0;i<tam;i++){
-		if(bombasTotal[i]){
-			bombasTotal[i].remove();
-		}
-	}	
-	telaMsg.style.display="none";
-	clearInterval(tmpCriaBomba);
-	cancelAnimationFrame(frames);
-	vidaPlaneta=300;
-	player.x=tamTelaW/2;
-	player.y=tamTelaH/2;
-	jog.style.top=player.y+"px";
-	jog.style.left=player.x+"px";
-	contBombas=150;
-	jogo=true;
-	tmpCriaBomba=setInterval(criaBomba,1700);
-	gameLoop();
-}
-
-
-
-function render(){
-	ctx.clearRect(0, 0, cnv.width, cnv.height);
-	drawFrame(player, player.imgPos[player.imgInd])
-	player.imgInd++;
-	if(player.imgInd >= player.imgPos.length){
-		player.imgInd = 0;
-	}
-}
 
 function inicia(){
-	player.live=true;
-	player.img.src = 'assets/player/p1.png';
+	if (!player.live) {
+		document.addEventListener("keydown",teclaDw);
+		document.addEventListener("keyup",teclaUp);
 
-	enemy.img.src = 'assets/enemy/e1.png';
+		// Player live
+		player.live=true;
 
-	var enemys = []
+		// Load Assets
+		player.img.src = 'assets/player/p1.png';
+		enemy.img.src = 'assets/enemy/e1.png';
+		background.img.src = 'assets/background/background-space.png';
 
-	//Ini Tela
-	tamTelaH=cnv.height;
-	tamTelaW=cnv.width;
+		// Generate Enemies
+		while(enemies.length < 9){
+			enemies.push(new Enemy(enemySpawnX(), 0))
+		}
 
-	//Ini Jogador
-	dirxJ=diryJ=0;
-	player.x=tamTelaW/2;
-	player.y=tamTelaH/2;
-	player.vel=velT=5;
-	//desenhar jogador
+		//Ini Tela
+		tamTelaH=cnv.height;
+		tamTelaW=cnv.width;
 
-	//Controles das bombas
-	contBombas=150;
-	velB=3;
+		//Ini Jogador
+		dirxJ=diryJ=0;
+		player.x=tamTelaW/2;
+		player.y=tamTelaH;
+		player.vel=velT=5;
 
-	//Score
-	score=0
+		//Score
+		score=0
 
-	//Controles de explosão
-	ie=ison=0;
+		//Enemy Waves
+		enemyWaves = 1;
 
-	gameLoop();
-	//Telas
-	//document.getElementById("btnJogar").addEventListener("click",reinicia);
+		//Controles de explosão
+		ie=ison=0;
 
+		gameLoop();
+	} else {
+		// reinicia
+	}
 }
-
-
-//window.addEventListener("load",inicia);
-document.addEventListener("keydown",teclaDw);
-document.addEventListener("keyup",teclaUp);
