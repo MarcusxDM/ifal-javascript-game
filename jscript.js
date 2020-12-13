@@ -10,6 +10,12 @@ var hasShot = false;
 var score = 0;
 var enemyWaves = 0;
 var enemies = [];
+var lastScore = 0;
+var highScore = 0;
+var explosions = [];
+const explosionImg = new Image();
+var shotSound;
+
 
 function enemySpawnX(){
 	return Math.random() * ((cnv.width - enemy.w) - enemy.w) + enemy.w;
@@ -45,7 +51,8 @@ const player = {
 	w: 31,
 	h: 33,
 	img: new Image(),
-	imgPos: [1, 1, 32, 32],
+	imgPos: [0, 0, 31, 31],
+	deathPos: [64, 64, 94, 94], 
 	imgInd: 0,
 
 	atualizaQuadros() {
@@ -58,12 +65,11 @@ const player = {
 		};
 	},
 	explode() {
-		ctx.clearRect(player.x, player.y, player.w, player.h);
-		player.live = false			
+		player.imgPos = player.deathPos;
+		player.imgInd = 0;
 	},
 	desenha() {
 		player.atualizaQuadros();
-		//player.explode();
 		const spriteX = player.imgPos[player.imgInd]
 		ctx.drawImage(
 			player.img, 
@@ -74,6 +80,14 @@ const player = {
 	},
 	atira(){
 		shots.push(new Shot());
+	},
+	checkExploded(){
+		if(player.imgPos[player.imgInd-1] === 94){
+			enemies.length = 0;
+			shots.length = 0;
+			highScore = highscoreCheck(highScore, score);
+			player.live = false;
+		}
 	}
 };
 
@@ -91,9 +105,9 @@ class Enemy {
 	constructor(posX, posY) {
 		this.x = posX;
 		this.y = posY;
-		this.w = 25;
+		this.w = 24;
 		this.h = 16;
-		this.imgPos = [1, 1, 26, 26];
+		this.imgPos = [0, 0, 24, 24];
 		this.imgInd = 0;
 		this.live = true;
 	}
@@ -124,8 +138,10 @@ class Enemy {
 		if(this.y >= tamTelaH)
 			this.y = 0;
 		else
-			this.y += 2;
+			this.y += 2+(enemyWaves/10);
 	}
+
+	
 }
 
 class Shot {
@@ -153,6 +169,39 @@ class Shot {
 	hit(){
 		ctx.clearRect(this.x, this.y, this.w, this.h);
 		score = score + 10;
+	}
+}
+
+class Explosion {
+	constructor(posX, posY){
+		this.x = posX;
+		this.y = posY;
+		this.w = enemy.w;
+		this.h = enemy.h;
+		this.imgPos = [25, 25, 25, 25, 50, 50, 50, 50];
+		this.imgInd = 0;
+	}
+
+	atualizaQuadros() {
+		const atraso = frames % intervalo === 0;
+		if(atraso) {
+			if(this.imgInd >= this.imgPos.length - 1) {
+				this.imgInd = 0;
+			} 
+			this.imgInd++;
+		}
+	}
+
+	desenha() {
+		this.atualizaQuadros();
+		const spriteX = this.imgPos[this.imgInd]
+		ctx.drawImage(
+			enemy.img, 
+			spriteX, 1, 
+			this.w, this.h,
+			this.x, this.y,
+			this.w, this.h
+		)
 	}
 }
 
@@ -194,13 +243,19 @@ function teclaUp(){
 	if((tecla==37)||(tecla==39)){//Esquerda
 		dirxJ=0;
 	}
+
 	if (tecla==32 && hasShot==true){
-		player.atira();
-		hasShot = false;
+		if(player.live){
+			player.atira();
+			shotSound.stop();
+			shotSound.currentTime(0);
+			shotSound.play();
+			hasShot = false;
+		}
 	}
 }
 
-function controlaJogador(){
+function playerControll(){
 	player.y+=diryJ*player.vel;
 	player.x+=dirxJ*player.vel;
 
@@ -221,7 +276,7 @@ function shotControll(){
 	for (var i = 0; i < shots.length; i++){
 		if (shots[i].y == 0) {
 			shots.splice(i, 1);
-			  break;
+			break;
 		}
 		shots[i].desenha()
 		shots[i].move()
@@ -229,6 +284,10 @@ function shotControll(){
 		for (var e = 0; e < enemies.length; e++){
 			if (colisao(shots[i], enemies[e])){
 				shots[i].hit();
+				explosionSound.stop();
+				explosionSound.currentTime(0);
+				explosionSound.play();
+				explosions.push(new Explosion(enemies[e].x, enemies[e].y))
 				shots.splice(i, 1);
 				enemies.splice(e, 1);
 				break;
@@ -241,11 +300,7 @@ function enemiesControll(){
 	if (enemies.length == 0){
 		enemyWaves++;
 		while(enemies.length < 9){
-			if(enemyWaves % 10 == 0){
-				enemies.push(new Enemy(enemySpawnX(), 26*(enemyWaves/2)));
-			} else {
-				enemies.push(new Enemy(enemySpawnX(), 0));
-			}
+			enemies.push(new Enemy(enemySpawnX(), 0));
 		}
 		
 	} else {
@@ -253,6 +308,10 @@ function enemiesControll(){
 			e.desenha();
 			e.move();
 			if(colisao(player, e)){
+				explosionSound.stop();
+				explosionSound.currentTime(0);
+				explosionSound.play();
+				explosionFlag = false;
 				player.explode();
 				break;
 			}
@@ -260,35 +319,79 @@ function enemiesControll(){
 	}
 }
 
+function explosionControll() {
+	for (const ex of explosions) {
+		ex.desenha();
+		if(ex.imgInd >= ex.imgPos.length - 1){
+			explosions.splice(ex, 1)
+			break;
+		}
+	}
+}
+
+function som(fonte){
+	this.som = document.createElement('audio');
+	this.som.src = fonte;
+	this.som.setAttribute('preload', 'auto');
+	this.som.setAttribute('controls', 'none');
+	this.som.style.display = 'none';   
+	document.body.appendChild(this.som);
+	this.play = function() {
+		this.som.play();
+	}
+	this.stop = function() {
+		this.som.pause();
+	}
+	this.currentTime = function(time){
+		this.som.currentTime = time;
+	}
+	
+ };
+
+
 function gameLoop(){
 	if(player.live){
 		background.desenha();
 		player.desenha();
-
-		controlaJogador();
+		
+		playerControll();
 		enemiesControll()
 		shotControll();
+		explosionControll();
+
+		player.checkExploded()
 
 		document.getElementById("score").innerHTML = score;
+		document.getElementById("highscore").innerHTML = highScore;
 		document.getElementById("wave").innerHTML = enemyWaves;
 		window.requestAnimationFrame(gameLoop, cnv);
 	}
 }
 
-
+function highscoreCheck(scr1, scr2){
+	if (scr1 > scr2){
+		return scr1
+	} else {
+		return scr2
+	}
+}
+// Load Assets
+player.img.src = 'assets/player/p1.png';
+enemy.img.src = 'assets/enemy/e1.png';
+background.img.src = 'assets/background/background-space.png';
+shotSound = new som('assets/sounds/shot4.wav');
+bgMusic = new som('assets/sounds/bg.wav');
+explosionSound = new som('assets/sounds/explosion2.wav');
 
 function inicia(){
+	bgMusic.play();
 	if (!player.live) {
 		document.addEventListener("keydown",teclaDw);
 		document.addEventListener("keyup",teclaUp);
 
 		// Player live
-		player.live=true;
-
-		// Load Assets
-		player.img.src = 'assets/player/p1.png';
-		enemy.img.src = 'assets/enemy/e1.png';
-		background.img.src = 'assets/background/background-space.png';
+		player.live = true;
+		player.imgPos = [0, 0, 31, 31];
 
 		// Generate Enemies
 		while(enemies.length < 9){
@@ -311,11 +414,6 @@ function inicia(){
 		//Enemy Waves
 		enemyWaves = 1;
 
-		//Controles de explosão
-		ie=ison=0;
-
 		gameLoop();
-	} else {
-		// reinicia
 	}
 }

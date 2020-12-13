@@ -1,9 +1,31 @@
 body{
 	overflow-x: hidden;
-	overflow-y: hidden;
-	background-color: #fff;
+	/* overflow-y: hidden; */
+	background-color: black;
 }
 
-canvas{
-	border: solid 1px;
+.font-wave {
+	color: #743ad5;
+	font-weight: bold;
 }
+
+.white-font {
+	color: white;
+	font-weight: bolder;
+}
+
+.border-gradient {
+	border: 10px solid;
+	border-image-slice: 1;
+	border-width: 5px;
+  }
+
+.border-gradient-purple {
+	border-image-source: linear-gradient(to left, #743ad5, #d53a9d);
+  }
+
+.center {
+	margin: auto;
+	width: 50%;
+	padding: 10px;
+  }

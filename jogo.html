@@ -7,16 +7,23 @@
 	</head>
 	<body>
 
-		<div id="painel">
+		<div class="center">
+		<div id="painel" class="font-wave">
 			Score
-			<div id="score"></div>
+			<div id="score" class="white-font"></div>
+			<br>
 			Wave
-			<div id="wave"></div>
+			<div id="wave" class="white-font"></div>
+			<br>
+			Highscore
+			<div id="highscore" class="white-font"></div>
 		</div>	
 		<button id="btnJogar" class="btnJogar" onclick="inicia()">Jogar</button>
 	
-		
-		<canvas id="gameScreen" width="425px" height="635px"> </canvas>
+		<div class="center">
+			<canvas class="border-gradient border-gradient-purple" id="gameScreen" width="425px" height="635px"> </canvas>
+		</div>
 		<script type="text/javascript" src="jscript.js"></script>
+		</div>
 	</body>
 </html> 
