@@ -21,14 +21,6 @@ function enemySpawnX(){
 	return Math.random() * ((cnv.width - enemy.w) - enemy.w) + enemy.w;
 }
 
-var delay = ( function() {
-    var timer = 0;
-    return function(callback, ms) {
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
-
 const background = {
 	w: 400,
 	h: 600,
@@ -311,7 +303,6 @@ function enemiesControll(){
 				explosionSound.stop();
 				explosionSound.currentTime(0);
 				explosionSound.play();
-				explosionFlag = false;
 				player.explode();
 				break;
 			}
