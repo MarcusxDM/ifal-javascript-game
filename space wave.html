@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-br">
+	<head>
+		<title>SPACE WAVE</title>
+		<meta charset="utf-8"/>
+		<link rel="stylesheet" href="estilos.css"/>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+		integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	</head>
+	
+	<body>
+
+		<div class="container justify">
+
+			<div id="painel" class="font-wave item flex">
+				Score
+				<div id="score" class="white-font"></div>
+				<br>
+				Wave
+				<div id="wave" class="white-font"></div>
+				<br>
+				Highscore
+				<div id="highscore" class="white-font"></div>
+				<br>
+				<button id="btnJogar" class="btnJogar btn btn-outline-secondary btn-lg" onclick="inicia()">PLAY</button>
+				<br>
+				<br>
+				<br>
+				<br>
+				<div class="font-wave">feito por:</div>
+				<div class="white-font">Marcus Pestana<br>Jhonathan Mulle<br>Isaac Barros</div><br>
+			</div>	
+			
+	
+			<div class="item flex">
+				<canvas class="border-gradient border-gradient-purple" id="gameScreen" width="425px" height="635px"> </canvas>
+			</div>
+
+			<div class="font-wave item flex">
+				<div class="white-font">SPACE WAVE</div><br><br>
+				Em 20XX, a terra está sendo atacada por alienigenas e seu trabalho é destruir-los!
+				Enfrente infinitas waves de inimigos e consiga o HIGHSCORE.<br><br><br>
+				<div class="white-font">CONTROLES:</div><br>
+				MOVER -    Setas<br>
+				LASER SHOT -    Espaço 				
+			</div>	
+		</div>
+		<script type="text/javascript" src="jscript.js"></script>
+	</body>
+</html> 

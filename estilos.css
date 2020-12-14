@@ -1,7 +1,7 @@
 body{
 	overflow-x: hidden;
 	/* overflow-y: hidden; */
-	background-color: black;
+	background-color: black !important;
 }
 
 .font-wave {
@@ -29,3 +29,47 @@ body{
 	width: 50%;
 	padding: 10px;
   }
+
+.container {
+	max-width: 100%;
+	margin: 0 auto;
+	display: flex;
+	padding-top: 10%;
+}
+
+/* Flex Item */
+.item {
+	margin: 5px;
+	padding: 0 10px;
+	text-align: center;
+	font-size: 1.5em;
+}
+
+/* Indica que o conteúdo deve se expandir */
+.flex {
+	flex: 1;
+}
+
+.btn-outline-secondary{
+	color: #743ad5 !important;
+	border-color: #743ad5 !important;
+	font-weight: bolder !important;
+} 
+
+.btn-outline-secondary:hover { 
+	background-color: #743ad5 !important;
+	color:white !important;
+	border-color: #743ad5 !important;
+	font-weight: bolder !important;
+}
+
+.btn-outline-secondary:active {
+	background-color: #743ad5 !important;
+	color: black !important;
+	border-color: #743ad5 !important;
+	font-weight: bolder !important;
+} 
+
+.btn-outline-secondary:focus {
+	outline: none !important;
+}

@@ -71,7 +71,8 @@ const player = {
 			player.w, player.h);
 	},
 	atira(){
-		shots.push(new Shot());
+		if ((player.imgPos[player.imgInd] <= 31) )
+			shots.push(new Shot());
 	},
 	checkExploded(){
 		if(player.imgPos[player.imgInd-1] === 94){
@@ -147,7 +148,7 @@ class Shot {
 
 	desenha() {
 		if(this.y > 0){
-			ctx.fillStyle = 'green';
+			ctx.fillStyle = '#F45780';
 			ctx.fillRect(this.x, this.y , this.w, this.h);
 		}
 	}
@@ -237,7 +238,7 @@ function teclaUp(){
 	}
 
 	if (tecla==32 && hasShot==true){
-		if(player.live){
+		if(player.live && (player.imgPos[player.imgInd] <= 31)){
 			player.atira();
 			shotSound.stop();
 			shotSound.currentTime(0);
@@ -336,6 +337,11 @@ function som(fonte){
 	this.currentTime = function(time){
 		this.som.currentTime = time;
 	}
+	this.loop = function(bool){
+		this.som.setAttribute('loop', bool);
+	}
+
+	
 	
  };
 
@@ -349,8 +355,7 @@ function gameLoop(){
 		enemiesControll()
 		shotControll();
 		explosionControll();
-
-		player.checkExploded()
+		player.checkExploded();
 
 		document.getElementById("score").innerHTML = score;
 		document.getElementById("highscore").innerHTML = highScore;
@@ -371,10 +376,11 @@ player.img.src = 'assets/player/p1.png';
 enemy.img.src = 'assets/enemy/e1.png';
 background.img.src = 'assets/background/background-space.png';
 shotSound = new som('assets/sounds/shot4.wav');
-bgMusic = new som('assets/sounds/bg.wav');
+bgMusic = new som('assets/sounds/bg.wav'); // 252 segundos
 explosionSound = new som('assets/sounds/explosion2.wav');
 
 function inicia(){
+	bgMusic.loop(true);
 	bgMusic.play();
 	if (!player.live) {
 		document.addEventListener("keydown",teclaDw);
